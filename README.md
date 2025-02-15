@@ -53,6 +53,7 @@ A template for this json has been included in the repo, so you can just replace 
 Now, place both `.json` files in the same directory as `yt-music-downloader.py`
 
 Your directory should now look something like this:
+
 ![alt text](docs-images/image-2.png)
 
 Now you should be able to run the python script.
