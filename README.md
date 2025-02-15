@@ -1,6 +1,6 @@
 # yt-music-downloader
 
-A pretty basic python script for downloading whole playlists, individual songs, or liked songs from your YouTube Music account.
+A pretty basic python script for bulk downloading whole playlists, individual songs, or liked songs from your YouTube Music account.
 
 ## How to use
 
