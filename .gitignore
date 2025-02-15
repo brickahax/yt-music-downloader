@@ -35,3 +35,5 @@ env.bak/
 venv.bak/
 
 *.json
+oauth-credentials.json
+*.exe
