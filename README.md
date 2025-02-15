@@ -49,7 +49,7 @@ Use this format for the json:
 }
 ```
 
-A template for this json has been included in the repo, so you can just replace the "xxxx"s with your data.
+A template for this json has been included in the repo (`oauth-credentials(TEMPLATE).json`), so you can just replace the "xxxx"s with your data, then <b>rename this file to `oauth-credentials.json`</b>.
 Now, place both `.json` files in the same directory as `yt-music-downloader.py`
 
 Your directory should now look something like this:
