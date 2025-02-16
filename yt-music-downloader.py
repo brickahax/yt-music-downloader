@@ -79,6 +79,38 @@ class DownloaderMixin:
 		return None
 
 
+	def get_ydl_opts(self, output_format: OutputFormat, output_dir: str, subfolder_grouping: SubFolderGrouping, info_dict) -> dict:
+		# info_dict may be empty.
+
+		file_format = 'mp3' if output_format == DownloaderMixin.OutputFormat.MP3 else 'm4a'
+		file_naming_template = '/%(title)s.%(ext)s'
+
+		if subfolder_grouping == DownloaderMixin.SubFolderGrouping.GroupByUploader:
+			file_naming_template = '/%(uploader)s/%(title)s.%(ext)s'
+
+		# Try to get the artist from the metadata, fallback to uploader if missing
+		artist = info_dict.get('artist', info_dict.get('uploader', 'UnknownArtist'))
+		if subfolder_grouping == DownloaderMixin.SubFolderGrouping.GroupByArtist:
+			file_naming_template = f'/{artist}/%(title)s.%(ext)s'
+
+		album = info_dict.get('album', None)
+		if subfolder_grouping == DownloaderMixin.SubFolderGrouping.GroupByArtistAlbum:
+			if (album):
+				file_naming_template = f'/{artist}/{album}/%(title)s.%(ext)s'
+			else:
+				file_naming_template = f'/{artist}/%(title)s.%(ext)s'
+
+		return {
+			'format': f'{file_format}/bestaudio/best',
+			'postprocessors': [
+				{ 'key': 'FFmpegExtractAudio', 'preferredcodec': file_format },
+        		{ 'key': 'FFmpegMetadata' },
+        		{ 'key': 'EmbedThumbnail' }
+			],
+			'writethumbnail': True,
+			'outtmpl': output_dir + file_naming_template
+		}
+
 	
 	def download_songs(self, playlist, songs_limit: int, output_dir:str, output_format:OutputFormat, subfolder_grouping:SubFolderGrouping):
 		dest_dir = os.path.expanduser(output_dir)
@@ -146,34 +178,28 @@ class DownloaderMixin:
 			video_url = ytm.get_video_url(video_id)
 			video_urls.append((video_url, video_id))
 
-		file_format = 'mp3' if output_format == DownloaderMixin.OutputFormat.MP3 else 'm4a'
-		file_naming_template = '/%(title)s.%(ext)s'
-		if subfolder_grouping == DownloaderMixin.SubFolderGrouping.GroupByArtist:
-			file_naming_template = '/%(artist)s/%(title)s.%(ext)s'
-		if subfolder_grouping == DownloaderMixin.SubFolderGrouping.GroupByArtistAlbum:
-			file_naming_template = '/%(artist)s/%(album)s/%(title)s.%(ext)s'
-		if subfolder_grouping == DownloaderMixin.SubFolderGrouping.GroupByUploader:
-			file_naming_template = '/%(uploader)s/%(title)s.%(ext)s'
-		
-		ydl_opts = {
-			'format': f'{file_format}/bestaudio/best',
-			'postprocessors': [
-				{ 'key': 'FFmpegExtractAudio', 'preferredcodec': file_format },
-        		{ 'key': 'FFmpegMetadata' },
-        		{ 'key': 'EmbedThumbnail' }
-			],
-			'writethumbnail': True,
-			'outtmpl':  output_dir + file_naming_template
-		}
+		is_info_dict_not_required = subfolder_grouping in [DownloaderMixin.SubFolderGrouping.NoGrouping, DownloaderMixin.SubFolderGrouping.GroupByUploader] 
 
 		for (video_url, video_id) in video_urls:
 			try:
-				with YoutubeDL(ydl_opts) as ydl:
-					info_dict = ydl.extract_info(video_url, download=True)
-					output_filename = ydl.prepare_filename(info_dict)
-					ytm.set_yt_id_metadata(output_filename, video_id, output_format)
+				with YoutubeDL() as ydl:
+					# Skip metadata fetch if we don't need the metadata info_dict to set ydl_opts
+					if (not is_info_dict_not_required):
+						info_dict = ydl.extract_info(video_url, download=False)
+					else:
+						info_dict = {}
+					ydl_opts = ytm.get_ydl_opts(output_format, dest_dir, subfolder_grouping, info_dict)
+					try:
+						with YoutubeDL(ydl_opts) as ydl:
+							info_dict = ydl.extract_info(video_url, download=True)
+							output_filename = ydl.prepare_filename(info_dict)
+							ytm.set_yt_id_metadata(output_filename, video_id, output_format)
+					except Exception as err:
+						print(f"Exception caught while trying to download song {video_url}:  {err}")
+
 			except Exception as err:
-				print(f"Exception caught while trying to download song {video_url}:  {err}")
+				print(f"Exception caught while getting info for {video_url}:  {err}")
+
 		print('--- Finished ---------------------------------------------------------------------------')
 	
 
