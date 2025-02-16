@@ -60,13 +60,21 @@ Now you should be able to run the python script.
 
 #### Running the script
 
-`python yt-music-downloader.py <songs> <output directory> <file format> <songs limit>`
+`python yt-music-downloader.py <songs> <output directory> <file format> <subfolder grouping> <songs limit>`
 
 ##### Options:
 
 - `songs`: playlist url | single song url | `likes` | `history`
 - `OPTIONAL: output directory`: Directory that songs will be saved to. Default: `~Music`
 - `OPTIONAL: file format`: `mp3` | `m4a`. Default: `m4a`
+- `OPTIONAL: subfolder grouping`: `artist` | `artist-album` | `uploader` | `no-grouping`. How song files will be grouped into subfolders in the `output directory`.
+  <sub><sup>e.g:`artist`-> `outputDir/Sum 41/In Too Deep.m4a`</sup></sub>
+  <sub><sup>e.g:`artist-album`-> `outputDir/Sum 41/All Killer, No Filler/In Too Deep.m4a`</sup></sub>
+  <sub><sup>e.g:`uploader`-> `outputDir/RandomYtReuploader/In Too Deep.m4a`</sup></sub>
+  <sub><sup>e.g:`no-grouping`-> `outputDir/In Too Deep.m4a`</sup></sub>
+  If `artist` metadata can't be found, the `uploader` name will be used as a fallback.
+  If `album` metadata can't be found, the song will be placed in the `artist` subfolder.
+  Default: `artist-album`.
 - `OPTIONAL: songs limit`: int representing the max songs to download. This might be cooked if it's too high, idk lol. Default: `500`
 
 ##### Examples:
@@ -77,8 +85,8 @@ Now you should be able to run the python script.
 `python yt-music-downloader.py https://music.youtube.com/watch?v=LCkiKoORZZo`
 <sub><sup>Download the song 'Once We Part Ways' into the default Music directory in default .m4a format</sup></sub>
 
-`python yt-music-downloader.py likes D:\\YtMusic m4a 50`
-<sub><sup>Download the last `50` songs you've liked into the D-drive in m4a format</sup></sub>
+`python yt-music-downloader.py likes D:\\YtMusic m4a no-grouping 50`
+<sub><sup>Download the last `50` songs you've liked into the D-drive `YtMusic` folder in m4a format, with no sub-folders</sup></sub>
 
 ##### Repeat downloads
 
