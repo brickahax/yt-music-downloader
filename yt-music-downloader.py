@@ -20,6 +20,12 @@ class DownloaderMixin:
 		M4A = 1
 		MP3 = 2
 
+	class SubFolderGrouping(Enum):
+		GroupByArtist = 1
+		GroupByArtistAlbum = 2
+		GroupByUploader = 3
+		NoGrouping = 4
+
 	def extract_youtube_id(self, url) -> tuple[str, UrlType]:
 		# Regular expression pattern for extracting YouTube video ID (for youtube.com and youtu.be)
 		video_pattern = r'(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/|music\.youtube\.com/watch\?v=)([a-zA-Z0-9_-]{11})'
@@ -74,7 +80,7 @@ class DownloaderMixin:
 
 
 	
-	def download_songs(self, playlist, songs_limit: int, output_dir:str, output_format:OutputFormat):
+	def download_songs(self, playlist, songs_limit: int, output_dir:str, output_format:OutputFormat, subfolder_grouping:SubFolderGrouping):
 		dest_dir = os.path.expanduser(output_dir)
 		if not os.path.exists(dest_dir):
 			os.makedirs(dest_dir)
@@ -141,6 +147,13 @@ class DownloaderMixin:
 			video_urls.append((video_url, video_id))
 
 		file_format = 'mp3' if output_format == DownloaderMixin.OutputFormat.MP3 else 'm4a'
+		file_naming_template = '/%(title)s.%(ext)s'
+		if subfolder_grouping == DownloaderMixin.SubFolderGrouping.GroupByArtist:
+			file_naming_template = '/%(artist)s/%(title)s.%(ext)s'
+		if subfolder_grouping == DownloaderMixin.SubFolderGrouping.GroupByArtistAlbum:
+			file_naming_template = '/%(artist)s/%(album)s/%(title)s.%(ext)s'
+		if subfolder_grouping == DownloaderMixin.SubFolderGrouping.GroupByUploader:
+			file_naming_template = '/%(uploader)s/%(title)s.%(ext)s'
 		
 		ydl_opts = {
 			'format': f'{file_format}/bestaudio/best',
@@ -150,7 +163,7 @@ class DownloaderMixin:
         		{ 'key': 'EmbedThumbnail' }
 			],
 			'writethumbnail': True,
-			'outtmpl':  output_dir + '/%(uploader)s/%(title)s.%(ext)s'
+			'outtmpl':  output_dir + file_naming_template
 		}
 
 		for (video_url, video_id) in video_urls:
@@ -164,22 +177,27 @@ class DownloaderMixin:
 		print('--- Finished ---------------------------------------------------------------------------')
 	
 
-	def download(self, url: str, limit: int, output_dir: str, output_format:OutputFormat):	
+	def download(self, url: str, limit: int, output_dir: str, output_format:OutputFormat, subfolder_grouping:SubFolderGrouping):	
 		if (url == 'likes'):
-			ytm.download_songs(ytm.get_liked_songs(limit=limit), limit, output_dir, output_format)
-			exit
+			print('Loading "likes" data...')
+			songs = ytm.get_liked_songs(limit=limit)
 		elif (url == 'history'):
-			ytm.download_songs(ytm.get_history(), limit, output_dir, output_format)
-			exit
+			print('Loading "history" data...')
+			songs = ytm.get_history()
 		else:
 			[id, type] = ytm.extract_youtube_id(url)
 
 			if (type == DownloaderMixin.UrlType.Playlist):
-				ytm.download_songs(ytm.get_playlist(id), limit, output_dir, output_format)
+				print('Loading playlist data...')
+				songs = ytm.get_playlist(id)
 			elif (type == DownloaderMixin.UrlType.Video):
-				ytm.download_songs(ytm.get_song(id), limit, output_dir, output_format)
+				print('Loading song data...')
+				songs = ytm.get_song(id)
 			else:
 				print("Couldn't parse url as youtube playlist or song. HINT: Use 'likes' or 'history' instead of a url to download from those playlists")
+				return
+		
+		ytm.download_songs(songs, limit, output_dir, output_format, subfolder_grouping)
 
 
 # Add the mixin to ytmusicapi class, creating our very own frankentype										
@@ -223,13 +241,25 @@ if __name__ == "__main__":
 	if (len(sys.argv) > 3):
 		output_format = DownloaderMixin.OutputFormat.MP3 if sys.argv[3] == 'mp3' else DownloaderMixin.OutputFormat.M4A
 	
-	songs_limit = 500
+	subfolder_grouping = DownloaderMixin.SubFolderGrouping.GroupByArtistAlbum
 	if (len(sys.argv) > 4):
-		songs_limit = int(sys.argv[4])
+		subfolder_input = sys.argv[4]
+		if (subfolder_input == 'artist'):
+			subfolder_grouping = DownloaderMixin.SubFolderGrouping.GroupByArtist
+		if (subfolder_input == 'artist-album'):
+			subfolder_grouping = DownloaderMixin.SubFolderGrouping.GroupByArtistAlbum
+		if (subfolder_input == 'uploader'):
+			subfolder_grouping = DownloaderMixin.SubFolderGrouping.GroupByUploader
+		if (subfolder_input == 'no-grouping'):
+			subfolder_grouping = DownloaderMixin.SubFolderGrouping.NoGrouping
+
+	songs_limit = 500
+	if (len(sys.argv) > 5):
+		songs_limit = int(sys.argv[5])
 	
 	print(f"To download: {url_to_download}")
 	print(f"Output directory: {output_dir}")
 	print(f"Limit: {songs_limit}")
 
 	ytm = YTMusic("oauth.json", oauth_credentials=ytmusicapi.OAuthCredentials(client_id=credentials['client_id'], client_secret=credentials['client_secret']))
-	ytm.download(url_to_download, songs_limit, output_dir, output_format)
+	ytm.download(url_to_download, songs_limit, output_dir, output_format, subfolder_grouping)
