@@ -23,8 +23,9 @@ class DownloaderMixin:
 	class SubFolderGrouping(Enum):
 		GroupByArtist = 1
 		GroupByArtistAlbum = 2
-		GroupByUploader = 3
-		NoGrouping = 4
+		GroupByAlbum = 3
+		GroupByUploader = 4
+		NoGrouping = 5
 
 	def extract_youtube_id(self, url) -> tuple[str, UrlType]:
 		# Regular expression pattern for extracting YouTube video ID (for youtube.com and youtu.be)
@@ -99,6 +100,11 @@ class DownloaderMixin:
 				file_naming_template = f'/{artist}/{album}/%(title)s.%(ext)s'
 			else:
 				file_naming_template = f'/{artist}/%(title)s.%(ext)s'
+		if (subfolder_grouping == DownloaderMixin.SubFolderGrouping.GroupByAlbum):
+			if (album):
+				file_naming_template = f'/{album}/%(title)s.%(ext)s'
+			else:
+				file_naming_template = f'/%(title)s.%(ext)s'
 
 		return {
 			'format': f'{file_format}/bestaudio/best',
@@ -274,6 +280,8 @@ if __name__ == "__main__":
 			subfolder_grouping = DownloaderMixin.SubFolderGrouping.GroupByArtist
 		if (subfolder_input == 'artist-album'):
 			subfolder_grouping = DownloaderMixin.SubFolderGrouping.GroupByArtistAlbum
+		if (subfolder_input == 'album'):
+			subfolder_grouping = DownloaderMixin.SubFolderGrouping.GroupByAlbum
 		if (subfolder_input == 'uploader'):
 			subfolder_grouping = DownloaderMixin.SubFolderGrouping.GroupByUploader
 		if (subfolder_input == 'no-grouping'):

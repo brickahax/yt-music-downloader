@@ -67,13 +67,14 @@ Now you should be able to run the python script.
 - `songs`: playlist url | single song url | `likes` | `history`
 - `OPTIONAL: output directory`: Directory that songs will be saved to. Default: `~Music`
 - `OPTIONAL: file format`: `mp3` | `m4a`. Default: `m4a`
-- `OPTIONAL: subfolder grouping`: `artist` | `artist-album` | `uploader` | `no-grouping`. How song files will be grouped into subfolders in the `output directory`.
+- `OPTIONAL: subfolder grouping`: `artist` | `album` | `artist-album` | `uploader` | `no-grouping`. How song files will be grouped into subfolders in the `output directory`.
   <sub><sup>e.g:`artist`-> `outputDir/Sum 41/In Too Deep.m4a`</sup></sub>
+  <sub><sup>e.g:`album`-> `outputDir/All Killer, No Filler/In Too Deep.m4a`</sup></sub>
   <sub><sup>e.g:`artist-album`-> `outputDir/Sum 41/All Killer, No Filler/In Too Deep.m4a`</sup></sub>
   <sub><sup>e.g:`uploader`-> `outputDir/RandomYtReuploader/In Too Deep.m4a`</sup></sub>
   <sub><sup>e.g:`no-grouping`-> `outputDir/In Too Deep.m4a`</sup></sub>
   If `artist` metadata can't be found, the `uploader` name will be used as a fallback.
-  If `album` metadata can't be found, the song will be placed in the `artist` subfolder.
+  If `album` metadata can't be found, the song will be placed in the parent folder.
   Default: `artist-album`.
 - `OPTIONAL: songs limit`: int representing the max songs to download. This might be cooked if it's too high, idk lol. Default: `500`
 
